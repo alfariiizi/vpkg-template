@@ -1,0 +1,50 @@
+package {{.PackageName}}
+
+import (
+	"context"
+	// Add your imports here
+	"go.uber.org/fx"
+)
+
+// {{.Title}} provides {{.Description}}
+type {{.Title}}Config struct {
+	// Add your configuration fields here
+	// Example:
+	// APIKey    string `yaml:"api_key" env:"API_KEY"`
+	// Timeout   int    `yaml:"timeout" env:"TIMEOUT" default:"30"`
+}
+
+// {{.Title}} represents the main service/component
+type {{.Title}} struct {
+	config {{.Title}}Config
+	// Add your service dependencies here
+}
+
+// New{{.Title}} creates a new instance of {{.Title}}
+func New{{.Title}}(config {{.Title}}Config) *{{.Title}} {
+	return &{{.Title}}{
+		config: config,
+	}
+}
+
+// Start initializes the {{.Title}} service
+func (s *{{.Title}}) Start(ctx context.Context) error {
+	// Add your initialization logic here
+	return nil
+}
+
+// Stop gracefully shuts down the {{.Title}} service
+func (s *{{.Title}}) Stop(ctx context.Context) error {
+	// Add your cleanup logic here
+	return nil
+}
+
+// Module provides the Fx module for {{.Title}}
+func Module() fx.Option {
+	return fx.Module("{{.PackageName}}",
+		fx.Provide(
+			New{{.Title}},
+		),
+		fx.Invoke(func(*{{.Title}}) {}), // Ensure the service is instantiated
+	)
+}

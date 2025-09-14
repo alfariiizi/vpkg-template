@@ -1,0 +1,68 @@
+# {{.Title}}
+
+{{.Description}}
+
+## Installation
+
+```bash
+vandor vpkg add {{.Name}}
+```
+
+## Configuration
+
+Add the following to your `config/config.yaml`:
+
+```yaml
+{{.PackageName}}:
+  # Add your configuration options here
+  # Example:
+  # api_key: "your-api-key"
+  # timeout: 30
+```
+
+## Usage
+
+### Basic Usage
+
+```go
+package main
+
+import (
+	"{{.ModuleName}}/internal/vpkg/{{.Organization}}/{{.PackageName}}"
+	"go.uber.org/fx"
+)
+
+func main() {
+	fx.New(
+		{{.PackageName}}.Module(),
+		// Add other modules...
+	).Run()
+}
+```
+
+### Advanced Usage
+
+```go
+// Add advanced usage examples here
+```
+
+## Features
+
+- List your package features here
+- Feature 2
+- Feature 3
+
+## Dependencies
+
+This package requires the following Go modules:
+{{- range .Dependencies }}
+- `{{.}}`
+{{- end }}
+
+## License
+
+{{.License}}
+
+## Author
+
+{{.Author}}

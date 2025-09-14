@@ -1,0 +1,23 @@
+name: your-org/your-package-name
+title: Your Package Title
+description: Brief description of what your package does
+type: fx-module  # or cli-command, utility, etc.
+entry: main.go   # main entry file (without .tmpl extension)
+templates:
+  - templates/main.go.tmpl
+  - templates/README.md.tmpl
+  # Add more template files as needed
+destination: internal/vpkg/your-org/your-package-name
+version: v0.1.0
+license: MIT
+author: Your Name or Organization
+tags:
+  - full-backend  # Compatible architectures and features
+  - eda
+  - minimal
+  # Add relevant tags like: cache, database, logging, auth, etc.
+dependencies:
+  # List Go module dependencies that will be added to go.mod
+  # Example:
+  # - github.com/redis/go-redis/v9
+  # - go.uber.org/fx
