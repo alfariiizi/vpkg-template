@@ -1,0 +1,306 @@
+name: Test VPkg Packages
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  validate:
+    name: Validate Package Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm init -y
+          npm install js-yaml
+
+      - name: Run package validation
+        run: |
+          chmod +x ./validate-package.js
+          node ./validate-package.js
+
+      - name: Check required files
+        run: |
+          # Check for required files
+          if [ ! -f "meta.yaml" ]; then
+            echo "❌ meta.yaml is missing"
+            exit 1
+          fi
+
+          if [ ! -d "packages" ]; then
+            echo "❌ packages directory is missing"
+            exit 1
+          fi
+
+          echo "✅ Required files present"
+
+  test-installation:
+    name: Test Package Installation
+    runs-on: ubuntu-latest
+    needs: validate
+    strategy:
+      matrix:
+        go-version: ['1.21', '1.22']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: vpkg-repo
+
+      - name: Checkout vandor-cli
+        uses: actions/checkout@v4
+        with:
+          repository: alfariiizi/vandor-cli
+          path: vandor-cli
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Build vandor-cli
+        run: |
+          cd vandor-cli
+          go mod tidy
+          go build -o vandor main.go
+          chmod +x vandor
+
+      - name: Setup test environment
+        run: |
+          cd vpkg-repo
+          chmod +x ./test-locally.sh
+
+          # Override CLI path for GitHub Actions
+          export VANDOR_CLI_PATH="../vandor-cli"
+
+          # Setup test project
+          ./test-locally.sh setup
+
+      - name: Start local registry server
+        run: |
+          cd vpkg-repo
+          python3 -m http.server 8080 &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+
+          # Wait for server to start
+          sleep 3
+
+          # Test server is running
+          curl -f http://localhost:8080/meta.yaml || exit 1
+
+      - name: Test package installations
+        run: |
+          cd vpkg-repo
+          export VANDOR_CLI_PATH="../vandor-cli"
+
+          # Get list of packages from meta.yaml
+          PACKAGES=$(grep 'name: "' meta.yaml | sed 's/.*name: "\(.*\)".*/\1/')
+
+          for PACKAGE in $PACKAGES; do
+            echo "Testing package: $PACKAGE"
+
+            # Test dry-run first
+            if ! ./test-locally.sh test "$PACKAGE" --dry-run; then
+              echo "❌ Dry-run failed for package: $PACKAGE"
+              exit 1
+            fi
+
+            # Test actual installation
+            if ! ./test-locally.sh test "$PACKAGE"; then
+              echo "❌ Installation failed for package: $PACKAGE"
+              exit 1
+            fi
+
+            echo "✅ Package $PACKAGE tested successfully"
+          done
+
+      - name: Cleanup
+        if: always()
+        run: |
+          # Kill the HTTP server if it's still running
+          if [ ! -z "$SERVER_PID" ]; then
+            kill $SERVER_PID || true
+          fi
+
+          # Cleanup test files
+          cd vpkg-repo
+          ./test-locally.sh clean || true
+
+  test-template-rendering:
+    name: Test Template Rendering
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Test template compilation
+        run: |
+          # Create a simple test for template rendering
+
+          # Find all .go.tmpl files and test basic Go syntax
+          find . -name "*.go.tmpl" | while read -r template_file; do
+            echo "Testing Go template: $template_file"
+
+            # Create a test Go file by replacing template variables
+            test_file="${template_file%.tmpl}.test"
+
+            # Basic template variable replacement for testing
+            sed 's/{{\.Title}}/TestTitle/g; s/{{\.Package}}/testpkg/g; s/{{\.Module}}/github.com\/test\/module/g; s/{{\.Namespace}}/test/g' \
+              "$template_file" > "$test_file"
+
+            # Check if the resulting Go file has valid syntax
+            if ! go fmt "$test_file" >/dev/null 2>&1; then
+              echo "❌ Invalid Go syntax in template: $template_file"
+              cat "$test_file"
+              exit 1
+            fi
+
+            echo "✅ Template $template_file produces valid Go code"
+            rm -f "$test_file"
+          done
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run security scan
+        run: |
+          # Check for suspicious patterns in templates
+          echo "Scanning for security issues..."
+
+          ISSUES_FOUND=0
+
+          # Check for hardcoded secrets
+          if grep -r -i "password\|secret\|token\|key" --include="*.tmpl" --include="*.go" .; then
+            echo "⚠️ Found potential hardcoded secrets"
+            ISSUES_FOUND=$((ISSUES_FOUND + 1))
+          fi
+
+          # Check for dangerous functions
+          if grep -r "os\.Exec\|exec\.Command" --include="*.tmpl" --include="*.go" .; then
+            echo "⚠️ Found potentially dangerous exec calls"
+            ISSUES_FOUND=$((ISSUES_FOUND + 1))
+          fi
+
+          # Check for unsafe operations
+          if grep -r "unsafe\." --include="*.tmpl" --include="*.go" .; then
+            echo "⚠️ Found unsafe operations"
+            ISSUES_FOUND=$((ISSUES_FOUND + 1))
+          fi
+
+          if [ $ISSUES_FOUND -eq 0 ]; then
+            echo "✅ No security issues found"
+          else
+            echo "⚠️ Found $ISSUES_FOUND potential security issues"
+            echo "Please review the findings above"
+          fi
+
+  generate-report:
+    name: Generate Test Report
+    runs-on: ubuntu-latest
+    needs: [validate, test-installation, test-template-rendering, security-scan]
+    if: always()
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate test report
+        run: |
+          echo "# VPkg Package Test Report" > test-report.md
+          echo "" >> test-report.md
+          echo "**Repository:** ${{ github.repository }}" >> test-report.md
+          echo "**Branch:** ${{ github.ref_name }}" >> test-report.md
+          echo "**Commit:** ${{ github.sha }}" >> test-report.md
+          echo "**Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> test-report.md
+          echo "" >> test-report.md
+
+          # Job status summary
+          echo "## Test Results Summary" >> test-report.md
+          echo "" >> test-report.md
+
+          if [ "${{ needs.validate.result }}" = "success" ]; then
+            echo "✅ **Package Validation:** Passed" >> test-report.md
+          else
+            echo "❌ **Package Validation:** Failed" >> test-report.md
+          fi
+
+          if [ "${{ needs.test-installation.result }}" = "success" ]; then
+            echo "✅ **Installation Test:** Passed" >> test-report.md
+          else
+            echo "❌ **Installation Test:** Failed" >> test-report.md
+          fi
+
+          if [ "${{ needs.test-template-rendering.result }}" = "success" ]; then
+            echo "✅ **Template Rendering:** Passed" >> test-report.md
+          else
+            echo "❌ **Template Rendering:** Failed" >> test-report.md
+          fi
+
+          if [ "${{ needs.security-scan.result }}" = "success" ]; then
+            echo "✅ **Security Scan:** Passed" >> test-report.md
+          else
+            echo "⚠️ **Security Scan:** Issues Found" >> test-report.md
+          fi
+
+          echo "" >> test-report.md
+          echo "## Package Information" >> test-report.md
+          echo "" >> test-report.md
+
+          # Extract package info from meta.yaml
+          if [ -f "meta.yaml" ]; then
+            echo "**Packages in this repository:**" >> test-report.md
+            echo "" >> test-report.md
+            grep 'name: "' meta.yaml | sed 's/.*name: "\(.*\)".*/- \1/' >> test-report.md
+          fi
+
+          echo "" >> test-report.md
+          echo "---" >> test-report.md
+          echo "*Generated by VPkg Test Workflow*" >> test-report.md
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: vpkg-test-report
+          path: test-report.md
+          retention-days: 30
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('test-report.md', 'utf8');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## VPkg Package Test Results\n\n${report}`
+            });

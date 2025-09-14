@@ -1,0 +1,23 @@
+{
+  "name": "vpkg-template",
+  "version": "1.0.0",
+  "description": "Template for creating VPkg packages for the Vandor ecosystem",
+  "scripts": {
+    "validate": "node validate-package.js",
+    "test": "./test-locally.sh validate",
+    "test:setup": "./test-locally.sh setup",
+    "test:clean": "./test-locally.sh clean"
+  },
+  "devDependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "keywords": [
+    "vandor",
+    "vpkg",
+    "golang",
+    "template",
+    "code-generation"
+  ],
+  "author": "Vandor Team",
+  "license": "MIT"
+}
