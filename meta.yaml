@@ -12,8 +12,7 @@ packages:
     title: "Package One Title"
     description: "Brief description of what package one does"
     type: "fx-module" # or cli-command, utility, etc.
-    entry: "package-one.go" # main entry file (without .tmpl extension)
-    templates: "packages/package-one/templates" # Auto-discover all .tmpl files
+    templates: "packages/package-one/templates" # Auto-discover all template files
     destination: "internal/vpkg/your-org/package-one"
     version: "v0.1.0"
     tags:
@@ -31,8 +30,7 @@ packages:
     title: "Package Two Title"
     description: "Brief description of what package two does"
     type: "cli-command"
-    entry: "main.go"
-    templates: "packages/package-two/templates" # Auto-discover all .tmpl files
+    templates: "packages/package-two/templates" # Auto-discover all template files
     destination: "cmd/package-two"
     version: "v0.1.0"
     tags:
@@ -47,8 +45,7 @@ packages:
 #     title: "Single Package Title"
 #     description: "Brief description"
 #     type: "fx-module"
-#     entry: "main.go"
-#     templates: "templates" # Auto-discover all .tmpl files in templates/
+#     templates: "templates" # Auto-discover all template files in templates/
 #     destination: "internal/vpkg/your-org/single-package"
 #     version: "v0.1.0"
 #     tags:
