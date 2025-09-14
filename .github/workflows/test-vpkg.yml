@@ -22,9 +22,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm init -y
-          npm install js-yaml
+        run: npm ci
 
       - name: Run package validation
         run: |

@@ -1,4 +1,4 @@
-package {{.PackageName}}
+package {{.Package}}
 
 import (
 	"context"
@@ -40,11 +40,10 @@ func (s *{{.Title}}) Stop(ctx context.Context) error {
 }
 
 // Module provides the Fx module for {{.Title}}
-func Module() fx.Option {
-	return fx.Module("{{.PackageName}}",
-		fx.Provide(
-			New{{.Title}},
-		),
-		fx.Invoke(func(*{{.Title}}) {}), // Ensure the service is instantiated
-	)
+var Module = fx.Module("{{.Package}}",
+	fx.Provide(
+		New{{.Title}},
+	),
+	fx.Invoke(func(*{{.Title}}) {}), // Ensure the service is instantiated
+)
 }

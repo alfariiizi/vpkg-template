@@ -259,8 +259,8 @@ class PackageValidator {
 
     // Validate Go template files
     validateGoTemplate(filePath, content, pkg) {
-        // Check for package declaration
-        if (!content.match(/^package\s+\w+/m)) {
+        // Check for package declaration (allowing template variables)
+        if (!content.match(/^package\s+(\w+|\{\{\.?\w+\}\})/m)) {
             this.log('error', `${filePath}: Missing package declaration`);
             return false;
         }
