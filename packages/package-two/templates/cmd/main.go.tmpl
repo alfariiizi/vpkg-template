@@ -1,0 +1,49 @@
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+)
+
+var rootCmd = &cobra.Command{
+	Use:   "{{.PackageName}}",
+	Short: "{{.Description}}",
+	Long:  `{{.Description}}`,
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the version number",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("{{.Title}} version {{.Version}}")
+	},
+}
+
+// Add your subcommands here
+var exampleCmd = &cobra.Command{
+	Use:   "example",
+	Short: "Example command functionality",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Running {{.Title}} example command...")
+		// Add your command logic here
+	},
+}
+
+func init() {
+	// Add subcommands to root
+	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(exampleCmd)
+
+	// Add flags here
+	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.{{.PackageName}}.yaml)")
+	// rootCmd.Flags().BoolP("verbose", "v", false, "verbose output")
+}
+
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}

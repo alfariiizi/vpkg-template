@@ -1,23 +1,57 @@
-name: your-org/your-package-name
-title: Your Package Title
-description: Brief description of what your package does
-type: fx-module  # or cli-command, utility, etc.
-entry: main.go   # main entry file (without .tmpl extension)
-templates:
-  - templates/main.go.tmpl
-  - templates/README.md.tmpl
-  # Add more template files as needed
-destination: internal/vpkg/your-org/your-package-name
-version: v0.1.0
-license: MIT
-author: Your Name or Organization
-tags:
-  - full-backend  # Compatible architectures and features
-  - eda
-  - minimal
-  # Add relevant tags like: cache, database, logging, auth, etc.
-dependencies:
-  # List Go module dependencies that will be added to go.mod
-  # Example:
-  # - github.com/redis/go-redis/v9
-  # - go.uber.org/fx
+# VPkg Repository Metadata
+# Supports both single-package and multi-package repositories
+version: "3.0"
+repository: "https://github.com/your-org/your-vpkg-repo"
+author: "Your Name or Organization"
+license: "MIT"
+
+# Package definitions - array format supports multiple packages per repository
+packages:
+  # First package example
+  - name: "your-org/package-one"
+    title: "Package One Title"
+    description: "Brief description of what package one does"
+    type: "fx-module" # or cli-command, utility, etc.
+    entry: "package-one.go" # main entry file (without .tmpl extension)
+    templates: "packages/package-one/templates" # Auto-discover all .tmpl files
+    destination: "internal/vpkg/your-org/package-one"
+    version: "v0.1.0"
+    tags:
+      - "full-backend" # Compatible architectures and features
+      - "eda"
+      - "minimal"
+      # Add relevant tags like: cache, database, logging, auth, etc.
+    dependencies:
+      # List Go module dependencies that will be added to go.mod
+      # - github.com/redis/go-redis/v9
+      # - go.uber.org/fx
+
+  # Second package example (for multi-package repos)
+  - name: "your-org/package-two"
+    title: "Package Two Title"
+    description: "Brief description of what package two does"
+    type: "cli-command"
+    entry: "main.go"
+    templates: "packages/package-two/templates" # Auto-discover all .tmpl files
+    destination: "cmd/package-two"
+    version: "v0.1.0"
+    tags:
+      - "full-backend"
+      - "cli"
+      - "database"
+    dependencies:
+      # - github.com/spf13/cobra
+# For single-package repositories, you can also use this simplified format:
+# packages:
+#   - name: "your-org/single-package"
+#     title: "Single Package Title"
+#     description: "Brief description"
+#     type: "fx-module"
+#     entry: "main.go"
+#     templates: "templates" # Auto-discover all .tmpl files in templates/
+#     destination: "internal/vpkg/your-org/single-package"
+#     version: "v0.1.0"
+#     tags:
+#       - "full-backend"
+#     dependencies: []
+

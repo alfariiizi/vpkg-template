@@ -1,0 +1,51 @@
+# {{.Title}}
+
+{{.Description}}
+
+## Installation
+
+```bash
+vandor vpkg add {{.Name}}
+```
+
+## Usage
+
+### Basic Usage
+
+```bash
+# Run the CLI command
+vandor vpkg exec {{.Name}} example
+
+# Check version
+vandor vpkg exec {{.Name}} version
+```
+
+### Configuration
+
+This CLI tool supports configuration via:
+- Command-line flags
+- Environment variables
+- Configuration files
+
+## Commands
+
+- `example` - Example command functionality
+- `version` - Print version information
+
+## Examples
+
+```bash
+# Example usage
+vandor vpkg exec {{.Name}} example --verbose
+
+# Using with configuration
+vandor vpkg exec {{.Name}} example --config /path/to/config.yaml
+```
+
+## License
+
+{{.License}}
+
+## Author
+
+{{.Author}}
