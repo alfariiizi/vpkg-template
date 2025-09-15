@@ -125,7 +125,8 @@ vandor vpkg add {{.VpkgName}}
 ## Usage
 
 ```go
-import "{{.Module}}/{{.PackagePath}}"
+// Use the new ImportPath variable for cleaner imports
+import "{{.ImportPath}}"
 
 app := fx.New(
     {{.Package}}.Module,
@@ -186,9 +187,12 @@ The following variables are available in your template files:
 ### Project Context
 - `{{.Module}}` - Target project's Go module name (e.g., "github.com/user/project")
 - `{{.PackagePath}}` - Installation path (e.g., "internal/vpkg/vandor/redis-cache")
+- `{{.ImportPath}}` - **NEW!** Combined import path (e.g., "github.com/user/project/internal/vpkg/vandor/redis-cache")
 - `{{.Version}}` - Package version (e.g., "v1.0.0")
 - `{{.Author}}` - Package author name
 - `{{.Time}}` - Installation timestamp (RFC3339)
+
+> **💡 Pro Tip**: Use `{{.ImportPath}}` instead of `{{.Module}}{{.PackagePath}}` for cleaner templates!
 
 ### Template Helpers
 - `{{.Title}}` → "Redis Cache"
